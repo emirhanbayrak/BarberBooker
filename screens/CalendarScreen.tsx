@@ -37,6 +37,7 @@ const CalendarScreen: React.FC = () => {
 
     const handleDeleteAppointment = (appointmentId: number) => {
         deleteAppointment(appointmentId);
+        setSelectedAppointment(null);
     };
 
 

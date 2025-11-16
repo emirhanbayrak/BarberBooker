@@ -46,7 +46,6 @@ const EditAppointmentModal: React.FC<EditAppointmentModalProps> = ({
   const handleDelete = () => {
     if (window.confirm('Bu randevuyu silmek istediğinizden emin misiniz?')) {
       onDelete(appointment.id);
-      onClose();
     }
   };
 
