@@ -17,6 +17,7 @@ const NavItem: React.FC<{
     className={`flex flex-col items-center justify-center w-full transition-colors duration-200 ${
       isActive ? 'text-brand-accent' : 'text-gray-400 hover:text-brand-light'
     }`}
+    aria-label={label}
   >
     <i className={`fa-solid ${icon} text-xl`}></i>
     <span className="text-xs mt-1">{label}</span>
@@ -32,17 +33,23 @@ const BottomNav: React.FC<BottomNavProps> = ({ currentScreen, setCurrentScreen }
         isActive={currentScreen === 'dashboard'}
         onClick={() => setCurrentScreen('dashboard')}
       />
-      <button 
-        onClick={() => setCurrentScreen('addAppointment')}
-        className="w-16 h-16 bg-brand-accent rounded-full flex items-center justify-center text-brand-primary text-3xl shadow-lg -mt-8 border-4 border-brand-primary transform hover:scale-105 active:scale-95 transition-transform duration-200"
-      >
-        <i className="fa-solid fa-plus"></i>
-      </button>
       <NavItem
         icon="fa-calendar-alt"
         label="Takvim"
         isActive={currentScreen === 'calendar'}
         onClick={() => setCurrentScreen('calendar')}
+      />
+       <NavItem
+        icon="fa-plus-circle"
+        label="Yeni"
+        isActive={currentScreen === 'addAppointment'}
+        onClick={() => setCurrentScreen('addAppointment')}
+      />
+      <NavItem
+        icon="fa-cut"
+        label="Hizmetler"
+        isActive={currentScreen === 'services'}
+        onClick={() => setCurrentScreen('services')}
       />
     </div>
   );

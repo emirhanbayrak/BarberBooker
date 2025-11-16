@@ -6,8 +6,9 @@ import AddAppointmentScreen from './screens/AddAppointmentScreen';
 import BottomNav from './components/BottomNav';
 import Toast from './components/Toast';
 import WelcomeScreen from './screens/WelcomeScreen';
+import ServicesScreen from './screens/ServicesScreen';
 
-export type Screen = 'dashboard' | 'calendar' | 'addAppointment';
+export type Screen = 'dashboard' | 'calendar' | 'addAppointment' | 'services';
 
 const AppContent: React.FC = () => {
   const [currentScreen, setCurrentScreen] = useState<Screen>('dashboard');
@@ -25,6 +26,8 @@ const AppContent: React.FC = () => {
         return <CalendarScreen />;
       case 'addAppointment':
         return <AddAppointmentScreen onAppointmentAdded={() => setCurrentScreen('calendar')} />;
+      case 'services':
+        return <ServicesScreen />;
       default:
         return <DashboardScreen />;
     }

@@ -14,6 +14,9 @@ interface AppContextType {
   updateAppointment: (updatedAppointment: Appointment) => boolean;
   deleteAppointment: (appointmentId: number) => void;
   showToast: (message: string) => void;
+  addService: (service: Omit<Service, 'id'>) => void;
+  updateService: (updatedService: Service) => void;
+  deleteService: (serviceId: number) => void;
 }
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -22,13 +25,64 @@ interface AppProviderProps {
   children: ReactNode;
 }
 
+const APPOINTMENTS_STORAGE_KEY = 'sy-hair-designer-appointments';
+const SERVICES_STORAGE_KEY = 'sy-hair-designer-services';
+
+const loadAppointments = (): Appointment[] => {
+    try {
+        const storedData = localStorage.getItem(APPOINTMENTS_STORAGE_KEY);
+        if (storedData) {
+            const parsed = JSON.parse(storedData) as any[];
+            // Convert date strings back to Date objects
+            return parsed.map(app => ({
+                ...app,
+                startTime: new Date(app.startTime),
+                endTime: new Date(app.endTime),
+            }));
+        }
+    } catch (error) {
+        console.error("Failed to load appointments from local storage", error);
+    }
+    // If nothing is stored or an error occurs, initialize with default data
+    return APPOINTMENTS;
+};
+
+const loadServices = (): Service[] => {
+    try {
+        const storedData = localStorage.getItem(SERVICES_STORAGE_KEY);
+        if (storedData) {
+            return JSON.parse(storedData) as Service[];
+        }
+    } catch (error) {
+        console.error("Failed to load services from local storage", error);
+    }
+    return SERVICES;
+};
+
+
 export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const [staff] = useState<Staff[]>(STAFF_MEMBERS);
   const [clients, setClients] = useState<Client[]>(CLIENTS);
-  const [services] = useState<Service[]>(SERVICES);
-  const [appointments, setAppointments] = useState<Appointment[]>(APPOINTMENTS);
+  const [services, setServices] = useState<Service[]>(loadServices);
+  const [appointments, setAppointments] = useState<Appointment[]>(loadAppointments);
   const [currentStaff, setCurrentStaff] = useState<Staff | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    try {
+        localStorage.setItem(APPOINTMENTS_STORAGE_KEY, JSON.stringify(appointments));
+    } catch (error) {
+        console.error("Failed to save appointments to local storage", error);
+    }
+  }, [appointments]);
+
+  useEffect(() => {
+    try {
+        localStorage.setItem(SERVICES_STORAGE_KEY, JSON.stringify(services));
+    } catch (error) {
+        console.error("Failed to save services to local storage", error);
+    }
+  }, [services]);
 
   const loginUser = (name: string) => {
     localStorage.setItem('sy-hair-designer-userName', name);
@@ -56,7 +110,10 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
   const addAppointment = (newAppointmentData: Omit<Appointment, 'id' | 'endTime'>): boolean => {
     const service = services.find(s => s.id === newAppointmentData.serviceId);
-    if (!service) return false;
+    if (!service) {
+      alert('Seçilen hizmet bulunamadı. Lütfen hizmet listesini kontrol edin.');
+      return false;
+    }
 
     const newStartTime = newAppointmentData.startTime;
 
@@ -96,7 +153,10 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   
   const updateAppointment = (updatedAppointment: Appointment): boolean => {
     const service = services.find(s => s.id === updatedAppointment.serviceId);
-    if (!service) return false;
+    if (!service) {
+      alert('Seçilen hizmet bulunamadı. Lütfen hizmet listesini kontrol edin.');
+      return false;
+    }
 
     const newStartTime = updatedAppointment.startTime;
     
@@ -145,6 +205,29 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     showToast('Randevu başarıyla silindi.');
   };
 
+  const addService = (newServiceData: Omit<Service, 'id'>) => {
+    const newService: Service = {
+      ...newServiceData,
+      id: Date.now(),
+    };
+    setServices(prev => [...prev, newService].sort((a,b) => a.name.localeCompare(b.name)));
+    showToast('Hizmet başarıyla eklendi!');
+  };
+
+  const updateService = (updatedService: Service) => {
+    setServices(prev => 
+        prev.map(s => (s.id === updatedService.id ? updatedService : s))
+            .sort((a, b) => a.name.localeCompare(b.name))
+    );
+    showToast('Hizmet başarıyla güncellendi!');
+  };
+
+  const deleteService = (serviceId: number) => {
+    setServices(prev => 
+      prev.filter(s => s.id !== serviceId)
+    );
+    showToast('Hizmet başarıyla silindi.');
+  };
 
   const value = {
     currentStaff,
@@ -158,6 +241,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     updateAppointment,
     deleteAppointment,
     showToast,
+    addService,
+    updateService,
+    deleteService,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
