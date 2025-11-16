@@ -37,7 +37,7 @@ const AddAppointmentScreen: React.FC<AddAppointmentScreenProps> = ({ onAppointme
         const success = addAppointment({
             clientName: clientName,
             serviceId: selectedService.id,
-            staffId: currentStaff.id,
+            staffId: currentStaff!.id,
             startTime: startTime,
             price: Number(price),
         });

@@ -12,7 +12,7 @@ const DashboardScreen: React.FC = () => {
 
     const todaysAppointments = appointments.filter(app => {
         const appDate = new Date(app.startTime);
-        return app.staffId === currentStaff.id && appDate >= today && appDate < tomorrow;
+        return app.staffId === currentStaff!.id && appDate >= today && appDate < tomorrow;
     });
 
     const totalRevenue = todaysAppointments.reduce((sum, app) => {
@@ -37,7 +37,7 @@ const DashboardScreen: React.FC = () => {
 
                 const dailyAppointments = appointments.filter(app => {
                     const appDate = new Date(app.startTime);
-                    return app.staffId === currentStaff.id && appDate >= date && appDate < nextDay;
+                    return app.staffId === currentStaff!.id && appDate >= date && appDate < nextDay;
                 });
 
                 const dailyRevenue = dailyAppointments.reduce((sum, app) => {
@@ -66,7 +66,7 @@ const DashboardScreen: React.FC = () => {
 
                 const weeklyAppointments = appointments.filter(app => {
                     const appDate = new Date(app.startTime);
-                    return app.staffId === currentStaff.id && appDate >= startDate && appDate <= endDate;
+                    return app.staffId === currentStaff!.id && appDate >= startDate && appDate <= endDate;
                 });
                 
                 const weeklyRevenue = weeklyAppointments.reduce((sum, app) => {
@@ -92,7 +92,7 @@ const DashboardScreen: React.FC = () => {
         <div className="p-6">
             <header className="mb-8">
                 <p className="text-lg text-gray-400">Hoşgeldin,</p>
-                <h1 className="text-4xl font-bold text-brand-accent">{currentStaff.name}</h1>
+                <h1 className="text-4xl font-bold text-brand-accent">{currentStaff!.name}</h1>
             </header>
 
             <div className="grid grid-cols-2 gap-4 mb-8">

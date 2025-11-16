@@ -5,12 +5,17 @@ import CalendarScreen from './screens/CalendarScreen';
 import AddAppointmentScreen from './screens/AddAppointmentScreen';
 import BottomNav from './components/BottomNav';
 import Toast from './components/Toast';
+import WelcomeScreen from './screens/WelcomeScreen';
 
 export type Screen = 'dashboard' | 'calendar' | 'addAppointment';
 
 const AppContent: React.FC = () => {
   const [currentScreen, setCurrentScreen] = useState<Screen>('dashboard');
-  const { toastMessage } = useAppContext();
+  const { toastMessage, currentStaff } = useAppContext();
+
+  if (!currentStaff) {
+    return <WelcomeScreen />;
+  }
 
   const renderScreen = () => {
     switch (currentScreen) {

@@ -1,14 +1,15 @@
-import React, { createContext, useState, ReactNode, useContext } from 'react';
+import React, { createContext, useState, ReactNode, useContext, useEffect } from 'react';
 import { Staff, Client, Service, Appointment } from '../types';
 import { STAFF_MEMBERS, CLIENTS, SERVICES, APPOINTMENTS } from '../constants';
 
 interface AppContextType {
-  currentStaff: Staff;
+  currentStaff: Staff | null;
   staff: Staff[];
   clients: Client[];
   services: Service[];
   appointments: Appointment[];
   toastMessage: string | null;
+  loginUser: (name: string) => void;
   addAppointment: (appointment: Omit<Appointment, 'id' | 'endTime'>) => boolean;
   updateAppointment: (updatedAppointment: Appointment) => boolean;
   deleteAppointment: (appointmentId: number) => void;
@@ -26,8 +27,25 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const [clients, setClients] = useState<Client[]>(CLIENTS);
   const [services] = useState<Service[]>(SERVICES);
   const [appointments, setAppointments] = useState<Appointment[]>(APPOINTMENTS);
-  const [currentStaff] = useState<Staff>(STAFF_MEMBERS[0]);
+  const [currentStaff, setCurrentStaff] = useState<Staff | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const loginUser = (name: string) => {
+    localStorage.setItem('sy-hair-designer-userName', name);
+    setCurrentStaff({
+        id: 1, // Assuming a single staff system for now
+        name: name,
+        avatar: 'https://picsum.photos/id/1005/200/200' 
+    });
+  };
+
+  useEffect(() => {
+    const storedName = localStorage.getItem('sy-hair-designer-userName');
+    if (storedName) {
+        loginUser(storedName);
+    }
+  }, []);
+
 
   const showToast = (message: string) => {
     setToastMessage(message);
@@ -135,6 +153,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     services,
     appointments,
     toastMessage,
+    loginUser,
     addAppointment,
     updateAppointment,
     deleteAppointment,

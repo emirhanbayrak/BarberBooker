@@ -22,7 +22,7 @@ const CalendarScreen: React.FC = () => {
     };
 
     const staffAppointments = useMemo(() =>
-        appointments.filter(app => app.staffId === currentStaff.id),
+        appointments.filter(app => app.staffId === currentStaff!.id),
         [appointments, currentStaff]
     );
 
