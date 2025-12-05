@@ -6,39 +6,25 @@ const DashboardScreen: React.FC = () => {
     const { currentStaff, appointments, services } = useAppContext();
     const [revenueView, setRevenueView] = useState<'weekly' | 'monthly'>('weekly');
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(today.getDate() + 1);
-
-    const todaysAppointments = appointments.filter(app => {
-        const appDate = new Date(app.startTime);
-        return app.staffId === currentStaff!.id && appDate >= today && appDate < tomorrow;
-    });
-
-    const totalRevenue = todaysAppointments.reduce((sum, app) => {
-        return sum + app.price;
-    }, 0);
-    
-    const upcomingAppointment = todaysAppointments
-        .filter(app => app.startTime > new Date())
-        .sort((a, b) => a.startTime.getTime() - b.startTime.getTime())[0];
-
     const chartData = useMemo(() => {
         const today = new Date();
+        today.setHours(0,0,0,0);
+        
         if (revenueView === 'weekly') {
             const weekData = [];
             for (let i = 6; i >= 0; i--) {
                 const date = new Date(today);
                 date.setDate(today.getDate() - i);
-                date.setHours(0, 0, 0, 0);
-
-                const nextDay = new Date(date);
-                nextDay.setDate(date.getDate() + 1);
+                
+                // Start and End of the specific day
+                const startOfDay = new Date(date);
+                startOfDay.setHours(0,0,0,0);
+                const endOfDay = new Date(date);
+                endOfDay.setHours(23,59,59,999);
 
                 const dailyAppointments = appointments.filter(app => {
                     const appDate = new Date(app.startTime);
-                    return app.staffId === currentStaff!.id && appDate >= date && appDate < nextDay;
+                    return app.staffId === currentStaff!.id && appDate >= startOfDay && appDate <= endOfDay;
                 });
 
                 const dailyRevenue = dailyAppointments.reduce((sum, app) => {
@@ -53,17 +39,18 @@ const DashboardScreen: React.FC = () => {
             return weekData;
         } else { // monthly (last 4 weeks)
             const monthData = [];
+            const todayEnd = new Date();
+            todayEnd.setHours(23, 59, 59, 999);
+
             for (let i = 3; i >= 0; i--) {
                 const weekLabel = i === 0 ? 'Bu Hafta' : `${i}. Hafta Önce`;
                 
-                const endDate = new Date();
-                endDate.setDate(today.getDate() - (i * 7));
+                const endDate = new Date(todayEnd);
+                endDate.setDate(todayEnd.getDate() - (i * 7));
                 
                 const startDate = new Date(endDate);
                 startDate.setDate(endDate.getDate() - 6);
-                
                 startDate.setHours(0, 0, 0, 0);
-                endDate.setHours(23, 59, 59, 999);
 
                 const weeklyAppointments = appointments.filter(app => {
                     const appDate = new Date(app.startTime);
@@ -83,13 +70,50 @@ const DashboardScreen: React.FC = () => {
         }
     }, [revenueView, appointments, currentStaff]);
 
+    const todaysAppointments = useMemo(() => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const tomorrow = new Date(today);
+        tomorrow.setDate(today.getDate() + 1);
+
+        return appointments.filter(app => {
+            const appDate = new Date(app.startTime);
+            return app.staffId === currentStaff!.id && appDate >= today && appDate < tomorrow;
+        });
+    }, [appointments, currentStaff]);
+
+    const totalRevenue = useMemo(() => {
+        return todaysAppointments.reduce((sum, app) => sum + app.price, 0);
+    }, [todaysAppointments]);
+    
+    // Updated Logic: Find the absolute next appointment, even if it's tomorrow or next week
+    const upcomingAppointment = useMemo(() => {
+        const now = new Date();
+        return appointments
+            .filter(app => {
+                const appDate = new Date(app.startTime);
+                return app.staffId === currentStaff!.id && appDate > now;
+            })
+            .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())[0];
+    }, [appointments, currentStaff]);
+
     const maxRevenue = Math.max(1, ...chartData.map(d => d.revenue));
 
     const getServiceNames = (serviceIds: number[]) => {
         return serviceIds.map(id => services.find(s => s.id === id)?.name).filter(Boolean).join(', ');
     };
 
-    const formatTime = (date: Date) => date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+    const formatTime = (date: Date) => {
+        return new Date(date).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+    };
+
+    const isToday = (date: Date) => {
+        const d = new Date(date);
+        const today = new Date();
+        return d.getDate() === today.getDate() &&
+               d.getMonth() === today.getMonth() &&
+               d.getFullYear() === today.getFullYear();
+    };
 
     return (
         <div className="p-6">
@@ -99,37 +123,42 @@ const DashboardScreen: React.FC = () => {
             </header>
 
             <div className="grid grid-cols-2 gap-4 mb-8">
-                <div className="bg-brand-secondary p-4 rounded-lg shadow-lg text-center">
+                <div className="bg-brand-secondary p-4 rounded-lg shadow-lg text-center border border-brand-primary/20">
                     <p className="text-4xl font-bold text-brand-accent">{todaysAppointments.length}</p>
                     <p className="text-gray-300">Bugünkü Randevu</p>
                 </div>
-                <div className="bg-brand-secondary p-4 rounded-lg shadow-lg text-center">
+                <div className="bg-brand-secondary p-4 rounded-lg shadow-lg text-center border border-brand-primary/20">
                     <p className="text-4xl font-bold text-brand-accent">{totalRevenue}<span className="text-2xl">₺</span></p>
                     <p className="text-gray-300">Tahmini Gelir</p>
                 </div>
             </div>
 
-            <div className="bg-brand-secondary p-4 rounded-lg shadow-lg">
+            <div className="bg-brand-secondary p-4 rounded-lg shadow-lg border border-brand-primary/20">
                 <h2 className="text-xl font-semibold text-brand-light mb-4 border-b border-brand-accent/20 pb-2">Sıradaki Randevu</h2>
                 {upcomingAppointment ? (
                     <div>
                         <div className="flex justify-between items-center mb-1">
-                           <span className="font-bold text-lg text-brand-accent">{upcomingAppointment.clientName}</span>
-                           <span className="text-lg font-mono">{formatTime(upcomingAppointment.startTime)}</span>
+                           <span className="font-bold text-lg text-brand-accent truncate pr-2">{upcomingAppointment.clientName}</span>
+                           <div className="flex flex-col items-end flex-shrink-0">
+                               <span className="font-mono text-lg">{formatTime(upcomingAppointment.startTime)}</span>
+                               {!isToday(upcomingAppointment.startTime) && (
+                                   <span className="text-xs text-brand-accent">{new Date(upcomingAppointment.startTime).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' })}</span>
+                               )}
+                           </div>
                         </div>
                         <div className="text-sm text-gray-400 mb-2 flex items-center">
                              <i className="fa-solid fa-car-side mr-2 text-brand-accent/70"></i>
                              {upcomingAppointment.carYear ? `${upcomingAppointment.carYear} ` : ''} 
                              {upcomingAppointment.carMake} {upcomingAppointment.carModel}
                         </div>
-                        <p className="text-gray-300 line-clamp-1">{getServiceNames(upcomingAppointment.serviceIds)}</p>
+                        <p className="text-gray-300 line-clamp-1 text-sm">{getServiceNames(upcomingAppointment.serviceIds)}</p>
                     </div>
                 ) : (
-                    <p className="text-gray-400">Bugün için yaklaşan randevu yok.</p>
+                    <p className="text-gray-400">Yaklaşan randevu bulunmuyor.</p>
                 )}
             </div>
             
-            <div className="bg-brand-secondary p-4 rounded-lg shadow-lg mt-8">
+            <div className="bg-brand-secondary p-4 rounded-lg shadow-lg mt-8 border border-brand-primary/20">
                 <div className="flex justify-between items-center mb-4">
                     <h2 className="text-xl font-semibold text-brand-light">Gelir Özeti</h2>
                     <div className="bg-brand-primary p-1 rounded-full text-sm flex">
@@ -145,7 +174,7 @@ const DashboardScreen: React.FC = () => {
                                 className="w-3/5 bg-brand-accent rounded-t-sm group-hover:opacity-80 transition-all duration-300"
                                 style={{ height: `${(data.revenue / maxRevenue) * 100}%` }}
                             ></div>
-                            <div className="text-xs text-gray-400 mt-2 whitespace-nowrap">{data.label}</div>
+                            <div className="text-[10px] text-gray-400 mt-2 whitespace-nowrap">{data.label}</div>
                         </div>
                     )) : <div className="flex items-center justify-center w-full h-full"><p className="text-gray-500">Görüntülenecek gelir verisi yok.</p></div>}
                 </div>
