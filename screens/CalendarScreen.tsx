@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../context/AppContext';
 import EditAppointmentModal from '../components/EditAppointmentModal';
@@ -26,7 +27,9 @@ const CalendarScreen: React.FC = () => {
         [appointments, currentStaff]
     );
 
-    const getServiceName = (serviceId: number) => services.find(s => s.id === serviceId)?.name || 'Hizmet';
+    const getServiceNames = (serviceIds: number[]) => {
+        return serviceIds.map(id => services.find(s => s.id === id)?.name).filter(Boolean).join(', ');
+    };
     
     const handleSaveAppointment = (updatedAppointment: Appointment) => {
         const success = updateAppointment(updatedAppointment);
@@ -70,7 +73,7 @@ const CalendarScreen: React.FC = () => {
                             className="absolute left-16 right-0 bg-brand-accent/80 backdrop-blur-sm rounded-lg p-2 text-brand-primary overflow-hidden cursor-pointer hover:ring-2 hover:ring-brand-light transition-all"
                             style={{ top: `${top}px`, height: `${height}px` }}
                         >
-                            <p className="font-bold text-sm">{getServiceName(app.serviceId)}</p>
+                            <p className="font-bold text-sm truncate">{getServiceNames(app.serviceIds)}</p>
                             <p className="text-xs">{app.clientName}</p>
                             <p className="text-xs font-mono">{`${app.startTime.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })} - ${app.endTime.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}`}</p>
                         </div>
@@ -101,7 +104,7 @@ const CalendarScreen: React.FC = () => {
                             <div className="space-y-1">
                                 {dayAppointments.map(app => (
                                     <div key={app.id} className="bg-brand-accent/80 text-brand-primary p-1 rounded text-[10px] leading-tight">
-                                        <p className="font-bold truncate">{getServiceName(app.serviceId)}</p>
+                                        <p className="font-bold truncate">{getServiceNames(app.serviceIds)}</p>
                                         <p className="truncate">{app.clientName}</p>
                                     </div>
                                 ))}

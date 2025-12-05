@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../context/AppContext';
 
@@ -84,7 +85,9 @@ const DashboardScreen: React.FC = () => {
 
     const maxRevenue = Math.max(1, ...chartData.map(d => d.revenue));
 
-    const getServiceName = (serviceId: number) => services.find(s => s.id === serviceId)?.name || 'Bilinmeyen Hizmet';
+    const getServiceNames = (serviceIds: number[]) => {
+        return serviceIds.map(id => services.find(s => s.id === id)?.name).filter(Boolean).join(', ');
+    };
 
     const formatTime = (date: Date) => date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
 
@@ -114,7 +117,7 @@ const DashboardScreen: React.FC = () => {
                            <span className="font-bold text-lg text-brand-accent">{upcomingAppointment.clientName}</span>
                            <span className="text-lg">{formatTime(upcomingAppointment.startTime)}</span>
                         </div>
-                        <p className="text-gray-300">{getServiceName(upcomingAppointment.serviceId)}</p>
+                        <p className="text-gray-300 line-clamp-1">{getServiceNames(upcomingAppointment.serviceIds)}</p>
                     </div>
                 ) : (
                     <p className="text-gray-400">Bugün için yaklaşan randevu yok.</p>

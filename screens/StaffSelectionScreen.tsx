@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Staff } from '../types';
 import { useAppContext } from '../context/AppContext';
@@ -12,8 +11,8 @@ const StaffSelectionScreen: React.FC<StaffSelectionScreenProps> = ({ onStaffSele
 
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-brand-primary p-6">
-      <h1 className="text-4xl font-bold text-brand-accent mb-2">SY</h1>
-      <h2 className="text-2xl font-light text-brand-text mb-12 tracking-wider">Hair Designer</h2>
+      <h1 className="text-4xl font-bold text-brand-accent mb-2">Auto Service</h1>
+      <h2 className="text-2xl font-light text-brand-text mb-12 tracking-wider">Repair</h2>
       <p className="text-xl text-brand-light mb-8">Personel Seçimi</p>
       <div className="w-full max-w-xs space-y-4">
         {staff.map((member) => (

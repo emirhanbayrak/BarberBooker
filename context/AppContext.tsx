@@ -1,12 +1,14 @@
+
 import React, { createContext, useState, ReactNode, useContext, useEffect } from 'react';
-import { Staff, Client, Service, Appointment } from '../types';
-import { STAFF_MEMBERS, CLIENTS, SERVICES, APPOINTMENTS } from '../constants';
+import { Staff, Client, Service, Appointment, ServiceCategory } from '../types';
+import { STAFF_MEMBERS, CLIENTS, SERVICES, APPOINTMENTS, SERVICE_CATEGORIES } from '../constants';
 
 interface AppContextType {
   currentStaff: Staff | null;
   staff: Staff[];
   clients: Client[];
   services: Service[];
+  categories: ServiceCategory[];
   appointments: Appointment[];
   toastMessage: string | null;
   loginUser: (name: string) => void;
@@ -25,17 +27,18 @@ interface AppProviderProps {
   children: ReactNode;
 }
 
-const APPOINTMENTS_STORAGE_KEY = 'sy-hair-designer-appointments';
-const SERVICES_STORAGE_KEY = 'sy-hair-designer-services';
+const APPOINTMENTS_STORAGE_KEY = 'sy-auto-service-appointments';
+const SERVICES_STORAGE_KEY = 'sy-auto-service-services-v1'; // Changed key to force update
 
 const loadAppointments = (): Appointment[] => {
     try {
         const storedData = localStorage.getItem(APPOINTMENTS_STORAGE_KEY);
         if (storedData) {
             const parsed = JSON.parse(storedData) as any[];
-            // Convert date strings back to Date objects
+            // Convert date strings back to Date objects and handle migration if needed
             return parsed.map(app => ({
                 ...app,
+                serviceIds: app.serviceIds || (app.serviceId ? [app.serviceId] : []),
                 startTime: new Date(app.startTime),
                 endTime: new Date(app.endTime),
             }));
@@ -62,6 +65,7 @@ const loadServices = (): Service[] => {
 
 export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const [staff] = useState<Staff[]>(STAFF_MEMBERS);
+  const [categories] = useState<ServiceCategory[]>(SERVICE_CATEGORIES);
   const [clients, setClients] = useState<Client[]>(CLIENTS);
   const [services, setServices] = useState<Service[]>(loadServices);
   const [appointments, setAppointments] = useState<Appointment[]>(loadAppointments);
@@ -85,7 +89,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   }, [services]);
 
   const loginUser = (name: string) => {
-    localStorage.setItem('sy-hair-designer-userName', name);
+    localStorage.setItem('sy-auto-service-userName', name);
     setCurrentStaff({
         id: 1, // Assuming a single staff system for now
         name: name,
@@ -94,7 +98,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   };
 
   useEffect(() => {
-    const storedName = localStorage.getItem('sy-hair-designer-userName');
+    const storedName = localStorage.getItem('sy-auto-service-userName');
     if (storedName) {
         loginUser(storedName);
     }
@@ -109,12 +113,14 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   };
 
   const addAppointment = (newAppointmentData: Omit<Appointment, 'id' | 'endTime'>): boolean => {
-    const service = services.find(s => s.id === newAppointmentData.serviceId);
-    if (!service) {
-      alert('Seçilen hizmet bulunamadı. Lütfen hizmet listesini kontrol edin.');
+    const selectedServices = services.filter(s => newAppointmentData.serviceIds.includes(s.id));
+    
+    if (selectedServices.length === 0) {
+      alert('Lütfen en az bir hizmet seçin.');
       return false;
     }
 
+    const totalDuration = selectedServices.reduce((sum, s) => sum + s.duration, 0);
     const newStartTime = newAppointmentData.startTime;
 
     const startOfToday = new Date();
@@ -124,7 +130,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         return false;
     }
     
-    const newEndTime = new Date(newStartTime.getTime() + service.duration * 60000);
+    const newEndTime = new Date(newStartTime.getTime() + totalDuration * 60000);
 
     const hasConflict = appointments.some(existingAppointment => {
         if (existingAppointment.staffId !== newAppointmentData.staffId) {
@@ -152,12 +158,14 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   };
   
   const updateAppointment = (updatedAppointment: Appointment): boolean => {
-    const service = services.find(s => s.id === updatedAppointment.serviceId);
-    if (!service) {
-      alert('Seçilen hizmet bulunamadı. Lütfen hizmet listesini kontrol edin.');
+    const selectedServices = services.filter(s => updatedAppointment.serviceIds.includes(s.id));
+    
+    if (selectedServices.length === 0) {
+      alert('Lütfen en az bir hizmet seçin.');
       return false;
     }
 
+    const totalDuration = selectedServices.reduce((sum, s) => sum + s.duration, 0);
     const newStartTime = updatedAppointment.startTime;
     
     const startOfToday = new Date();
@@ -167,7 +175,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         return false;
     }
     
-    const newEndTime = new Date(updatedAppointment.startTime.getTime() + service.duration * 60000);
+    const newEndTime = new Date(updatedAppointment.startTime.getTime() + totalDuration * 60000);
     
     const hasConflict = appointments.some(existingAppointment => {
         if (existingAppointment.id === updatedAppointment.id) {
@@ -234,6 +242,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     staff,
     clients,
     services,
+    categories,
     appointments,
     toastMessage,
     loginUser,

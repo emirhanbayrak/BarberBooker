@@ -13,19 +13,30 @@ export interface Client {
   lastVisit: Date;
 }
 
-export interface Service {
+export interface ServiceCategory {
   id: number;
   name: string;
+  slug: string;
+}
+
+export interface Service {
+  id: number;
+  categoryId: number;
+  name: string;
+  description?: string;
   duration: number; // in minutes
   price: number;
+  requiresParts?: boolean;
 }
 
 export interface Appointment {
   id: number;
   clientName: string;
   staffId: number;
-  serviceId: number;
+  serviceIds: number[];
   startTime: Date;
   endTime: Date;
   price: number;
+  materialCost?: number;
+  notes?: string;
 }
