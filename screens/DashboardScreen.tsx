@@ -113,9 +113,14 @@ const DashboardScreen: React.FC = () => {
                 <h2 className="text-xl font-semibold text-brand-light mb-4 border-b border-brand-accent/20 pb-2">Sıradaki Randevu</h2>
                 {upcomingAppointment ? (
                     <div>
-                        <div className="flex justify-between items-center mb-2">
+                        <div className="flex justify-between items-center mb-1">
                            <span className="font-bold text-lg text-brand-accent">{upcomingAppointment.clientName}</span>
-                           <span className="text-lg">{formatTime(upcomingAppointment.startTime)}</span>
+                           <span className="text-lg font-mono">{formatTime(upcomingAppointment.startTime)}</span>
+                        </div>
+                        <div className="text-sm text-gray-400 mb-2 flex items-center">
+                             <i className="fa-solid fa-car-side mr-2 text-brand-accent/70"></i>
+                             {upcomingAppointment.carYear ? `${upcomingAppointment.carYear} ` : ''} 
+                             {upcomingAppointment.carMake} {upcomingAppointment.carModel}
                         </div>
                         <p className="text-gray-300 line-clamp-1">{getServiceNames(upcomingAppointment.serviceIds)}</p>
                     </div>

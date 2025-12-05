@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { Service } from '../types';
+import { CAR_DATABASE } from '../constants';
 
 interface AddAppointmentScreenProps {
   onAppointmentAdded: () => void;
@@ -11,6 +11,11 @@ const AddAppointmentScreen: React.FC<AddAppointmentScreenProps> = ({ onAppointme
     const { services, categories, addAppointment, currentStaff } = useAppContext();
     
     const [clientName, setClientName] = useState<string>('');
+    const [selectedMake, setSelectedMake] = useState<string>('');
+    const [selectedModel, setSelectedModel] = useState<string>('');
+    const [customMake, setCustomMake] = useState<string>('');
+    const [customModel, setCustomModel] = useState<string>('');
+    const [carYear, setCarYear] = useState<string>('');
     const [selectedServiceIds, setSelectedServiceIds] = useState<number[]>([]);
     const [appointmentDate, setAppointmentDate] = useState<string>(new Date().toISOString().split('T')[0]);
     const [appointmentTime, setAppointmentTime] = useState<string>('09:00');
@@ -20,6 +25,8 @@ const AddAppointmentScreen: React.FC<AddAppointmentScreenProps> = ({ onAppointme
     const [expandedCategories, setExpandedCategories] = useState<number[]>([]);
     
     const today = new Date().toISOString().split('T')[0];
+    const currentYear = new Date().getFullYear();
+    const years = Array.from({ length: 30 }, (_, i) => currentYear - i);
 
     useEffect(() => {
         const total = services
@@ -60,10 +67,20 @@ const AddAppointmentScreen: React.FC<AddAppointmentScreenProps> = ({ onAppointme
         return revenue - cost;
     };
 
+    const getModelsForMake = (make: string) => {
+        if (make === 'Diğer') return [];
+        const car = CAR_DATABASE.find(c => c.make === make);
+        return car ? car.models : [];
+    };
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!clientName || selectedServiceIds.length === 0 || !appointmentDate || !appointmentTime || !price) {
-            alert('Lütfen tüm zorunlu alanları doldurun ve en az bir hizmet seçin.');
+        
+        const finalMake = selectedMake === 'Diğer' ? customMake : selectedMake;
+        const finalModel = (selectedMake === 'Diğer' || selectedModel === 'Diğer') ? customModel : selectedModel;
+
+        if (!clientName || selectedServiceIds.length === 0 || !appointmentDate || !appointmentTime || !price || !finalMake || !finalModel) {
+            alert('Lütfen tüm zorunlu alanları doldurun: Müşteri adı, Araç bilgileri, Hizmet, Tarih ve Ücret.');
             return;
         }
 
@@ -74,6 +91,9 @@ const AddAppointmentScreen: React.FC<AddAppointmentScreenProps> = ({ onAppointme
 
         const success = addAppointment({
             clientName: clientName,
+            carMake: finalMake,
+            carModel: finalModel,
+            carYear: carYear ? Number(carYear) : undefined,
             serviceIds: selectedServiceIds,
             staffId: currentStaff!.id,
             startTime: startTime,
@@ -101,6 +121,105 @@ const AddAppointmentScreen: React.FC<AddAppointmentScreenProps> = ({ onAppointme
                         className="w-full p-3 bg-brand-secondary border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-accent"
                         required
                     />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-1">Marka</label>
+                        <select
+                            value={selectedMake}
+                            onChange={(e) => {
+                                setSelectedMake(e.target.value);
+                                setSelectedModel('');
+                                setCustomMake('');
+                                setCustomModel('');
+                            }}
+                            className="w-full p-3 bg-brand-secondary border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-accent"
+                            required
+                        >
+                            <option value="">Seçiniz</option>
+                            {CAR_DATABASE.map(car => (
+                                <option key={car.make} value={car.make}>{car.make}</option>
+                            ))}
+                            <option value="Diğer">Diğer</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-1">Model</label>
+                         {selectedMake === 'Diğer' ? (
+                            <input
+                                type="text"
+                                placeholder="Marka giriniz"
+                                className="w-full p-3 bg-brand-secondary border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-accent opacity-50 cursor-not-allowed"
+                                disabled
+                                value="Manuel Giriş"
+                            />
+                         ) : (
+                            <select
+                                value={selectedModel}
+                                onChange={(e) => {
+                                    setSelectedModel(e.target.value);
+                                    if(e.target.value !== 'Diğer') setCustomModel('');
+                                }}
+                                className="w-full p-3 bg-brand-secondary border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-accent"
+                                disabled={!selectedMake}
+                                required
+                            >
+                                <option value="">{selectedMake ? 'Seçiniz' : 'Önce Marka'}</option>
+                                {getModelsForMake(selectedMake).map(model => (
+                                    <option key={model} value={model}>{model}</option>
+                                ))}
+                                <option value="Diğer">Diğer</option>
+                            </select>
+                         )}
+                    </div>
+                </div>
+
+                {/* Conditional Inputs for "Diğer" Selection */}
+                {(selectedMake === 'Diğer' || selectedModel === 'Diğer') && (
+                    <div className="bg-brand-primary/20 p-4 rounded-lg border border-brand-accent/30 space-y-4 animate-fade-in">
+                        <p className="text-xs text-brand-accent uppercase tracking-wider font-bold">Manuel Araç Girişi</p>
+                        <div className="grid grid-cols-2 gap-4">
+                             {selectedMake === 'Diğer' && (
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-400 mb-1">Marka</label>
+                                    <input
+                                        type="text"
+                                        value={customMake}
+                                        onChange={(e) => setCustomMake(e.target.value)}
+                                        placeholder="Örn: Volvo"
+                                        className="w-full p-3 bg-brand-secondary border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-accent"
+                                        required
+                                    />
+                                </div>
+                             )}
+                             <div>
+                                <label className="block text-xs font-medium text-gray-400 mb-1">Model</label>
+                                <input
+                                    type="text"
+                                    value={customModel}
+                                    onChange={(e) => setCustomModel(e.target.value)}
+                                    placeholder="Örn: S90"
+                                    className="w-full p-3 bg-brand-secondary border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-accent"
+                                    required
+                                />
+                             </div>
+                        </div>
+                    </div>
+                )}
+                
+                <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Model Yılı</label>
+                    <select
+                        value={carYear}
+                        onChange={(e) => setCarYear(e.target.value)}
+                        className="w-full p-3 bg-brand-secondary border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-accent"
+                    >
+                        <option value="">Seçiniz (Opsiyonel)</option>
+                        {years.map(year => (
+                            <option key={year} value={year}>{year}</option>
+                        ))}
+                    </select>
                 </div>
                 
                 <div>

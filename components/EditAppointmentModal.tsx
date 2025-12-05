@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Appointment } from '../types';
+import { CAR_DATABASE } from '../constants';
 
 interface EditAppointmentModalProps {
   isOpen: boolean;
@@ -23,7 +24,15 @@ const EditAppointmentModal: React.FC<EditAppointmentModalProps> = ({
   const [materialCost, setMaterialCost] = useState('');
   const [notes, setNotes] = useState('');
   
+  const [selectedMake, setSelectedMake] = useState('');
+  const [selectedModel, setSelectedModel] = useState('');
+  const [customMake, setCustomMake] = useState('');
+  const [customModel, setCustomModel] = useState('');
+  const [carYear, setCarYear] = useState('');
+
   const today = new Date().toISOString().split('T')[0];
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: 30 }, (_, i) => currentYear - i);
 
   useEffect(() => {
     if (appointment) {
@@ -33,6 +42,30 @@ const EditAppointmentModal: React.FC<EditAppointmentModalProps> = ({
       setPrice(appointment.price.toString());
       setMaterialCost(appointment.materialCost ? appointment.materialCost.toString() : '');
       setNotes(appointment.notes || '');
+      setCarYear(appointment.carYear ? appointment.carYear.toString() : '');
+      
+      // Determine if it's a known make/model or custom
+      const isKnownMake = CAR_DATABASE.some(c => c.make === appointment.carMake);
+      if (isKnownMake) {
+          setSelectedMake(appointment.carMake);
+          const models = CAR_DATABASE.find(c => c.make === appointment.carMake)?.models || [];
+          const isKnownModel = models.includes(appointment.carModel);
+          if (isKnownModel) {
+             setSelectedModel(appointment.carModel);
+             setCustomMake('');
+             setCustomModel('');
+          } else {
+             setSelectedModel('Diğer');
+             setCustomModel(appointment.carModel);
+             setCustomMake('');
+          }
+      } else {
+          setSelectedMake('Diğer');
+          setCustomMake(appointment.carMake);
+          setCustomModel(appointment.carModel);
+          setSelectedModel('Diğer'); // Force logic to show custom input
+      }
+
     }
   }, [appointment]);
 
@@ -46,7 +79,21 @@ const EditAppointmentModal: React.FC<EditAppointmentModalProps> = ({
       return revenue - cost;
   };
 
+  const getModelsForMake = (make: string) => {
+    if (make === 'Diğer') return [];
+    const car = CAR_DATABASE.find(c => c.make === make);
+    return car ? car.models : [];
+  };
+
   const handleSave = () => {
+    const finalMake = selectedMake === 'Diğer' ? customMake : selectedMake;
+    const finalModel = (selectedMake === 'Diğer' || selectedModel === 'Diğer') ? customModel : selectedModel;
+
+    if (!finalMake || !finalModel) {
+        alert("Lütfen araç marka ve modelini belirtiniz.");
+        return;
+    }
+
     const [year, month, day] = date.split('-').map(Number);
     const [hours, minutes] = time.split(':').map(Number);
     const newStartTime = new Date(year, month - 1, day, hours, minutes);
@@ -57,6 +104,9 @@ const EditAppointmentModal: React.FC<EditAppointmentModalProps> = ({
       price: Number(price),
       materialCost: materialCost ? Number(materialCost) : 0,
       notes: notes,
+      carMake: finalMake,
+      carModel: finalModel,
+      carYear: carYear ? Number(carYear) : undefined
     });
   };
 
@@ -76,24 +126,111 @@ const EditAppointmentModal: React.FC<EditAppointmentModalProps> = ({
           </button>
         </div>
         <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Tarih</label>
-            <input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              min={today}
-              className="w-full p-3 bg-brand-primary border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-accent [color-scheme:dark]"
-            />
+          
+          <div className="grid grid-cols-2 gap-4">
+              <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Marka</label>
+                  <select
+                      value={selectedMake}
+                      onChange={(e) => {
+                          setSelectedMake(e.target.value);
+                          setSelectedModel('');
+                          if (e.target.value !== 'Diğer') setCustomMake('');
+                      }}
+                      className="w-full p-2 bg-brand-primary border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-accent text-sm"
+                  >
+                      <option value="">Seçiniz</option>
+                      {CAR_DATABASE.map(car => (
+                          <option key={car.make} value={car.make}>{car.make}</option>
+                      ))}
+                      <option value="Diğer">Diğer</option>
+                  </select>
+              </div>
+              <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Model</label>
+                  {selectedMake === 'Diğer' ? (
+                       <input
+                        type="text"
+                        disabled
+                        value="Manuel Giriş"
+                        className="w-full p-2 bg-brand-primary border border-gray-600 rounded-lg focus:outline-none opacity-50 text-sm cursor-not-allowed"
+                       />
+                  ) : (
+                    <select
+                        value={selectedModel}
+                        onChange={(e) => setSelectedModel(e.target.value)}
+                        className="w-full p-2 bg-brand-primary border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-accent text-sm"
+                        disabled={!selectedMake}
+                    >
+                        <option value="">{selectedMake ? 'Seçiniz' : 'Marka?'}</option>
+                        {getModelsForMake(selectedMake).map(m => (
+                            <option key={m} value={m}>{m}</option>
+                        ))}
+                        <option value="Diğer">Diğer</option>
+                    </select>
+                  )}
+              </div>
           </div>
+
+          {(selectedMake === 'Diğer' || selectedModel === 'Diğer') && (
+               <div className="bg-brand-primary/30 p-3 rounded border border-brand-accent/20 grid grid-cols-2 gap-2 animate-fade-in">
+                    {selectedMake === 'Diğer' && (
+                        <div>
+                             <label className="block text-xs font-medium text-gray-400 mb-1">Marka</label>
+                             <input 
+                                type="text"
+                                value={customMake}
+                                onChange={(e) => setCustomMake(e.target.value)}
+                                className="w-full p-2 bg-brand-primary border border-gray-600 rounded text-sm"
+                             />
+                        </div>
+                    )}
+                    <div className={selectedMake !== 'Diğer' ? 'col-span-2' : ''}>
+                         <label className="block text-xs font-medium text-gray-400 mb-1">Model</label>
+                         <input 
+                            type="text"
+                            value={customModel}
+                            onChange={(e) => setCustomModel(e.target.value)}
+                            className="w-full p-2 bg-brand-primary border border-gray-600 rounded text-sm"
+                         />
+                    </div>
+               </div>
+          )}
+
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Saat</label>
-            <input
-              type="time"
-              value={time}
-              onChange={(e) => setTime(e.target.value)}
-              className="w-full p-3 bg-brand-primary border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-accent [color-scheme:dark]"
-            />
+            <label className="block text-sm font-medium text-gray-300 mb-1">Model Yılı</label>
+            <select
+                value={carYear}
+                onChange={(e) => setCarYear(e.target.value)}
+                className="w-full p-2 bg-brand-primary border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-accent text-sm"
+            >
+                <option value="">Seçiniz (Opsiyonel)</option>
+                {years.map(year => (
+                    <option key={year} value={year}>{year}</option>
+                ))}
+            </select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Tarih</label>
+                <input
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  min={today}
+                  className="w-full p-3 bg-brand-primary border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-accent [color-scheme:dark]"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Saat</label>
+                <input
+                  type="time"
+                  value={time}
+                  onChange={(e) => setTime(e.target.value)}
+                  className="w-full p-3 bg-brand-primary border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-accent [color-scheme:dark]"
+                />
+              </div>
           </div>
 
           <div className="flex gap-4">

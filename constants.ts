@@ -61,52 +61,30 @@ export const SERVICES: Service[] = [
   { id: 702, categoryId: 7, name: "Klima Dezenfeksiyonu", description: "Klima kanallarının ozon veya köpükle temizlenmesi.", duration: 30, price: 500, requiresParts: true }
 ];
 
-const today = new Date();
-today.setHours(0, 0, 0, 0);
+export const APPOINTMENTS: Appointment[] = [];
 
-export const APPOINTMENTS: Appointment[] = [
-  {
-    id: 1,
-    clientName: 'Elif Şahin',
-    staffId: 1,
-    serviceIds: [101], // Standart Periyodik Bakım
-    startTime: new Date(new Date(today).setHours(9, 0)),
-    endTime: new Date(new Date(today).setHours(10, 30)),
-    price: 2500,
-    materialCost: 1000,
-    notes: 'Müşteri acele ediyor, erken bitirilmesi rica olundu.',
-  },
-  {
-    id: 2,
-    clientName: 'Mehmet Öztürk',
-    staffId: 2, 
-    serviceIds: [501], // Lastik Değişimi
-    startTime: new Date(new Date(today).setHours(11, 0)),
-    endTime: new Date(new Date(today).setHours(12, 0)),
-    price: 600,
-    materialCost: 0,
-    notes: '',
-  },
-  {
-    id: 3,
-    clientName: 'Zeynep Arslan',
-    staffId: 1,
-    serviceIds: [201], // Ön Fren Balatası
-    startTime: new Date(new Date(today).setHours(13, 0)),
-    endTime: new Date(new Date(today).setHours(14, 0)),
-    price: 1200,
-    materialCost: 400,
-    notes: 'Disk kontrolü de yapılacak.',
-  },
-    {
-    id: 4,
-    clientName: 'Ahmet Çelik',
-    staffId: 3, 
-    serviceIds: [701], // Klima Gazı
-    startTime: new Date(new Date(today).setHours(14, 30)),
-    endTime: new Date(new Date(today).setHours(15, 15)),
-    price: 1000,
-    materialCost: 300,
-    notes: '',
-  },
+export interface CarMake {
+  make: string;
+  models: string[];
+}
+
+export const CAR_DATABASE: CarMake[] = [
+  { make: "Volkswagen", models: ["Golf", "Polo", "Passat", "Tiguan", "Caddy", "Transporter", "Jetta"] },
+  { make: "Renault", models: ["Clio", "Megane", "Symbol", "Captur", "Kadjar", "Kangoo", "Taliant"] },
+  { make: "Fiat", models: ["Egea", "Doblo", "Fiorino", "500", "Panda", "Linea", "Ducato"] },
+  { make: "Ford", models: ["Focus", "Fiesta", "Kuga", "Ranger", "Transit", "Courier", "Mondeo"] },
+  { make: "Toyota", models: ["Corolla", "Yaris", "C-HR", "RAV4", "Hilux", "Proace", "Auris"] },
+  { make: "Opel", models: ["Corsa", "Astra", "Mokka", "Crossland", "Grandland", "Insignia", "Combo"] },
+  { make: "Hyundai", models: ["i20", "i10", "Tucson", "Bayon", "Elantra", "Kona", "Accent"] },
+  { make: "Peugeot", models: ["208", "3008", "2008", "5008", "301", "Rifter", "Partner"] },
+  { make: "Honda", models: ["Civic", "CR-V", "Jazz", "HR-V", "City", "Accord"] },
+  { make: "BMW", models: ["1 Serisi", "3 Serisi", "5 Serisi", "X1", "X3", "X5"] },
+  { make: "Mercedes", models: ["A Serisi", "C Serisi", "E Serisi", "CLA", "GLA", "Vito", "Sprinter"] },
+  { make: "Audi", models: ["A3", "A4", "A6", "Q2", "Q3", "Q5"] },
+  { make: "Dacia", models: ["Duster", "Sandero", "Lodgy", "Jogger", "Dokker"] },
+  { make: "Kia", models: ["Sportage", "Stonic", "Rio", "Picanto", "Ceed", "Xceed"] },
+  { make: "Nissan", models: ["Qashqai", "Juke", "Micra", "X-Trail"] },
+  { make: "Skoda", models: ["Octavia", "Superb", "Kamiq", "Karoq", "Kodiaq", "Scala", "Fabia"] },
+  { make: "Citroen", models: ["C3", "C4", "C5 Aircross", "Berlingo", "C-Elysee"] },
+  { make: "Seat", models: ["Leon", "Ibiza", "Arona", "Ateca"] }
 ];

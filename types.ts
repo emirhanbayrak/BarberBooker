@@ -32,6 +32,9 @@ export interface Service {
 export interface Appointment {
   id: number;
   clientName: string;
+  carMake: string;
+  carModel: string;
+  carYear?: number;
   staffId: number;
   serviceIds: number[];
   startTime: Date;

@@ -27,8 +27,8 @@ interface AppProviderProps {
   children: ReactNode;
 }
 
-const APPOINTMENTS_STORAGE_KEY = 'sy-auto-service-appointments';
-const SERVICES_STORAGE_KEY = 'sy-auto-service-services-v1'; // Changed key to force update
+const APPOINTMENTS_STORAGE_KEY = 'sy-auto-service-appointments-v2';
+const SERVICES_STORAGE_KEY = 'sy-auto-service-services-v1';
 
 const loadAppointments = (): Appointment[] => {
     try {
@@ -41,6 +41,9 @@ const loadAppointments = (): Appointment[] => {
                 serviceIds: app.serviceIds || (app.serviceId ? [app.serviceId] : []),
                 startTime: new Date(app.startTime),
                 endTime: new Date(app.endTime),
+                carMake: app.carMake || 'Bilinmiyor',
+                carModel: app.carModel || '',
+                carYear: app.carYear || undefined,
             }));
         }
     } catch (error) {
